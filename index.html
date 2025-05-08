@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tech Quiz Hub</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <h1><i class="fas fa-brain"></i> Tech Quiz Hub</h1>
+        <p>Test your knowledge on various technologies!</p>
+    </header>
+
+    <main>
+        <!-- Section 1: Quiz Selection -->
+        <section id="quiz-selection-section" class="active-section">
+            <h2>Choose Your Challenge</h2>
+            <div id="quiz-list-container" class="quiz-grid">
+                <!-- Quiz cards will be dynamically inserted here by JavaScript -->
+            </div>
+        </section>
+
+        <!-- Section 2: Name Entry (Modal-like) -->
+        <section id="name-entry-section" class="overlay-section">
+            <div class="modal-content">
+                <h2 id="selected-quiz-title-name">Quiz Title</h2>
+                <p>Enter your name to start:</p>
+                <input type="text" id="player-name" placeholder="Your Name">
+                <button id="start-quiz-btn" class="cta-button">Start Quiz</button>
+                <button id="back-to-selection-btn" class="secondary-button">Back to Quizzes</button>
+            </div>
+        </section>
+
+        <!-- Section 3: Quiz Playing Area -->
+        <section id="quiz-area-section" class="overlay-section">
+            <div class="modal-content quiz-content">
+                <div class="quiz-header">
+                    <h2 id="quiz-title-playing">Quiz Title</h2>
+                    <p id="player-greeting">Playing as: <span id="display-player-name"></span></p>
+                    <div class="progress-container">
+                        <div id="progress-bar"></div>
+                    </div>
+                    <p id="question-counter">Question X of Y</p>
+                </div>
+
+                <div id="question-container">
+                    <p id="question-text"></p>
+                    <div id="options-container" class="options-grid">
+                        <!-- Options will be dynamically inserted here -->
+                    </div>
+                </div>
+                <button id="next-question-btn" class="cta-button">Next Question</button>
+                 <button id="quit-quiz-btn" class="secondary-button">Quit Quiz</button>
+            </div>
+        </section>
+
+        <!-- Section 4: Results Area -->
+        <section id="results-section" class="overlay-section">
+            <div class="modal-content results-content">
+                <h2 id="results-title">Quiz Results for <span id="results-player-name"></span></h2>
+                <p id="score-display">Your Score: X / Y</p>
+                <div id="feedback-message"></div>
+
+                <h3>Review Your Answers:</h3>
+                <div id="wrong-answers-container">
+                    <!-- Details of wrong answers will be inserted here -->
+                </div>
+                <button id="play-again-btn" class="cta-button">Play This Quiz Again</button>
+                <button id="back-to-home-btn" class.secondary-button">Back to All Quizzes</button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2023 Tech Quiz Hub - Get Your Learn On!</p>
+    </footer>
+
+    <script src="quizzes.js"></script> <!-- Quiz data first -->
+    <script src="script.js"></script>
+</body>
+</html>
