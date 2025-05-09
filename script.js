@@ -1,7 +1,12 @@
+// script.js
 document.addEventListener('DOMContentLoaded', () => {
+    // --- Constants ---
+    const MAX_QUESTIONS_PER_QUIZ = 12;
+
     // --- DOM Elements ---
     const quizSelectionSection = document.getElementById('quiz-selection-section');
     const quizListContainer = document.getElementById('quiz-list-container');
+
     const nameEntrySection = document.getElementById('name-entry-section');
     const selectedQuizTitleName = document.getElementById('selected-quiz-title-name');
     const playerNameInput = document.getElementById('player-name');
@@ -21,12 +26,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const resultsSection = document.getElementById('results-section');
     const resultsTitle = document.getElementById('results-title');
-    const resultsPlayerName = document.getElementById('results-player-name');
     const scoreDisplay = document.getElementById('score-display');
     const feedbackMessageEl = document.getElementById('feedback-message');
     const wrongAnswersContainer = document.getElementById('wrong-answers-container');
     const playAgainBtn = document.getElementById('play-again-btn');
-    const backToHomeBtn = document.getElementById('back-to-home-btn');
+    const chooseAnotherQuizBtn = document.getElementById('choose-another-quiz-btn');
 
     // --- State Variables ---
     let currentQuizData = null;
@@ -34,76 +38,113 @@ document.addEventListener('DOMContentLoaded', () => {
     let playerName = "";
     let currentQuestionIndex = 0;
     let score = 0;
-    let userAnswers = []; // To store { questionText, selectedAnswer, correctAnswer, isCorrect }
-    let shuffledQuestions = [];
+    let userAnswers = [];
+    let questionsForCurrentSession = [];
+    let selectedOptionButton = null;
 
     // --- Helper Functions ---
     function showSection(sectionElement) {
-        document.querySelectorAll('main > section').forEach(sec => sec.classList.remove('active-section'));
+        document.querySelectorAll('main > section').forEach(sec => {
+            sec.classList.remove('active-section');
+            if (sec.classList.contains('overlay-section')) {
+                sec.style.opacity = '0';
+                sec.style.visibility = 'hidden';
+            }
+        });
         sectionElement.classList.add('active-section');
+        if (sectionElement.classList.contains('overlay-section')) {
+            sectionElement.style.opacity = '1';
+            sectionElement.style.visibility = 'visible';
+        }
     }
 
     function shuffleArray(array) {
-        // Fisher-Yates shuffle
-        for (let i = array.length - 1; i > 0; i--) {
+        const newArray = [...array];
+        for (let i = newArray.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
+            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
         }
-        return array;
+        return newArray;
     }
 
-    // --- Initialization ---
-    function loadQuizSelection() {
-        quizListContainer.innerHTML = ""; // Clear previous
+    // --- Initialization & Main Flow ---
+    function initialize() {
+        loadQuizSelectionScreen();
+    }
+
+    function loadQuizSelectionScreen() {
+        quizListContainer.innerHTML = "";
         quizzes.forEach(quiz => {
             const card = document.createElement('div');
             card.className = 'quiz-card';
-            card.dataset.quizId = quiz.id;
+            card.dataset.quizId = quiz.id; // Store quizId on the card itself
+
+            // Create the "Click to Start" prompt
+            const startPrompt = document.createElement('span');
+            startPrompt.className = 'quiz-card-start-prompt';
+            startPrompt.textContent = 'Click to Start';
+
             card.innerHTML = `
                 <i class="${quiz.icon || 'fas fa-question-circle'}"></i>
                 <h3>${quiz.title}</h3>
                 <p>${quiz.description}</p>
-            `;
-            card.addEventListener('click', () => selectQuiz(quiz.id));
+            `; // Icon, title, description
+            card.appendChild(startPrompt); // Add the "Click to Start" prompt
+
+            card.addEventListener('click', () => promptForName(quiz.id)); // Event listener on the whole card
             quizListContainer.appendChild(card);
         });
         showSection(quizSelectionSection);
+        playerNameInput.value = playerName; // Pre-fill name if already entered
     }
 
-    // --- Quiz Flow ---
-    function selectQuiz(quizId) {
+    function promptForName(quizId) {
         currentQuizId = quizId;
         currentQuizData = quizzes.find(q => q.id === quizId);
         if (!currentQuizData) {
             console.error("Quiz not found:", quizId);
             return;
         }
-        selectedQuizTitleName.textContent = currentQuizData.title;
+        selectedQuizTitleName.textContent = `Selected Quiz: ${currentQuizData.title}`;
         showSection(nameEntrySection);
         playerNameInput.focus();
     }
 
     startQuizBtn.addEventListener('click', () => {
-        playerName = playerNameInput.value.trim();
-        if (!playerName) {
+        const enteredName = playerNameInput.value.trim();
+        if (!enteredName) {
             alert("Please enter your name!");
             playerNameInput.focus();
             return;
         }
+        playerName = enteredName;
         if (!currentQuizData) return;
-
         startGame();
     });
 
     backToSelectionBtn.addEventListener('click', () => {
-        loadQuizSelection();
+        loadQuizSelectionScreen();
     });
 
     function startGame() {
         currentQuestionIndex = 0;
         score = 0;
         userAnswers = [];
-        shuffledQuestions = shuffleArray([...currentQuizData.questions]); // Shuffle a copy
+
+        const allQuestionsFromBank = currentQuizData.questions;
+        if (!allQuestionsFromBank || allQuestionsFromBank.length === 0) {
+            alert(`The '${currentQuizData.title}' quiz currently has no questions. Please add some or select another quiz.`);
+            loadQuizSelectionScreen();
+            return;
+        }
+        const shuffledBank = shuffleArray(allQuestionsFromBank);
+        questionsForCurrentSession = shuffledBank.slice(0, MAX_QUESTIONS_PER_QUIZ);
+
+        if (questionsForCurrentSession.length === 0) {
+            alert(`Could not select questions for '${currentQuizData.title}'. Please check the question bank.`);
+            loadQuizSelectionScreen();
+            return;
+        }
 
         quizTitlePlaying.textContent = currentQuizData.title;
         displayPlayerName.textContent = playerName;
@@ -111,107 +152,115 @@ document.addEventListener('DOMContentLoaded', () => {
         loadQuestion();
     }
 
+    // --- loadQuestion, updateProgressBar, handleAnswerSelection, nextQuestionBtn listener, ---
+    // --- quitQuizBtn listener, showResults, playAgainBtn listener, chooseAnotherQuizBtn listener ---
+    // --- ARE ALL THE SAME as the previous version. No changes needed there. ---
+    // --- For brevity, I am not pasting them again. Ensure you have them from the last good version. ---
+
     function loadQuestion() {
-        if (currentQuestionIndex < shuffledQuestions.length) {
-            const question = shuffledQuestions[currentQuestionIndex];
+        selectedOptionButton = null;
+        if (currentQuestionIndex < questionsForCurrentSession.length) {
+            const question = questionsForCurrentSession[currentQuestionIndex];
             questionTextEl.textContent = question.questionText;
-            optionsContainer.innerHTML = ""; // Clear previous options
+            optionsContainer.innerHTML = "";
 
-            // Shuffle options as well for more randomness (optional)
             const shuffledOptions = shuffleArray([...question.options]);
-
             shuffledOptions.forEach(option => {
                 const button = document.createElement('button');
                 button.className = 'option-btn';
                 button.textContent = option;
-                button.addEventListener('click', () => selectAnswer(button, option, question.correctAnswer));
+                button.addEventListener('click', () => handleAnswerSelection(button));
                 optionsContainer.appendChild(button);
             });
 
             updateProgressBar();
-            questionCounter.textContent = `Question ${currentQuestionIndex + 1} of ${shuffledQuestions.length}`;
+            questionCounter.textContent = `Question ${currentQuestionIndex + 1} of ${questionsForCurrentSession.length}`;
             nextQuestionBtn.textContent = "Next Question";
-            nextQuestionBtn.style.display = "none"; // Hide initially, show after an answer is selected
-            // Disable options after selection to prevent re-selection
-            optionsContainer.childNodes.forEach(btn => btn.disabled = false);
-
+            nextQuestionBtn.style.display = "none";
         } else {
             showResults();
         }
     }
 
     function updateProgressBar() {
-        const progress = ((currentQuestionIndex) / shuffledQuestions.length) * 100;
+        const progress = ((currentQuestionIndex) / questionsForCurrentSession.length) * 100;
         progressBar.style.width = `${progress}%`;
     }
 
-    function selectAnswer(selectedButton, selectedOption, correctAnswer) {
-        // Disable all option buttons after one is clicked
-        optionsContainer.childNodes.forEach(btn => {
-            btn.disabled = true;
-            if (btn.textContent === correctAnswer) {
-                btn.classList.add('correct');
-            } else if (btn === selectedButton) {
-                btn.classList.add('incorrect');
-            }
-        });
+    function handleAnswerSelection(button) {
+        if (selectedOptionButton) {
+            selectedOptionButton.classList.remove('selected');
+        }
+        button.classList.add('selected');
+        selectedOptionButton = button;
 
-        selectedButton.classList.add('selected'); // Visually mark selected
-        const isCorrect = selectedOption === correctAnswer;
+        nextQuestionBtn.style.display = "block";
+        if (currentQuestionIndex === questionsForCurrentSession.length - 1) {
+            nextQuestionBtn.textContent = "Show Results";
+        }
+    }
+
+    nextQuestionBtn.addEventListener('click', () => {
+        if (!selectedOptionButton) {
+            alert("Please select an answer!");
+            return;
+        }
+
+        const question = questionsForCurrentSession[currentQuestionIndex];
+        const selectedText = selectedOptionButton.textContent;
+        const isCorrect = selectedText === question.correctAnswer;
 
         if (isCorrect) {
             score++;
         }
 
         userAnswers.push({
-            questionText: shuffledQuestions[currentQuestionIndex].questionText,
-            selectedAnswer: selectedOption,
-            correctAnswer: correctAnswer,
+            questionText: question.questionText,
+            selectedAnswer: selectedText,
+            correctAnswer: question.correctAnswer,
             isCorrect: isCorrect
         });
 
-        nextQuestionBtn.style.display = "block"; // Show Next button
-        if (currentQuestionIndex === shuffledQuestions.length - 1) {
-            nextQuestionBtn.textContent = "Show Results";
-        }
-    }
-
-    nextQuestionBtn.addEventListener('click', () => {
         currentQuestionIndex++;
         loadQuestion();
     });
 
     quitQuizBtn.addEventListener('click', () => {
         if (confirm("Are you sure you want to quit? Your progress will be lost.")) {
-            loadQuizSelection();
+            loadQuizSelectionScreen();
         }
     });
 
-    // --- Results ---
     function showResults() {
-        progressBar.style.width = `100%`; // Full progress at results
-        resultsPlayerName.textContent = playerName;
-        scoreDisplay.textContent = `Your Score: ${score} / ${shuffledQuestions.length}`;
+        progressBar.style.width = `100%`;
+        resultsTitle.textContent = `Quiz Results for ${playerName}!`;
+        scoreDisplay.textContent = `Your Score: ${score} / ${questionsForCurrentSession.length}`;
 
         let feedbackMessage = "";
-        const percentage = (score / shuffledQuestions.length) * 100;
-        if (percentage === 100) {
-            feedbackMessage = "🎉 Perfect Score! You're a Tech Guru! 🌟";
+        const percentage = questionsForCurrentSession.length > 0 ? (score / questionsForCurrentSession.length) * 100 : 0;
+
+        if (questionsForCurrentSession.length === 0) {
+            feedbackMessage = "No questions were presented in this quiz.";
+            feedbackMessageEl.style.color = 'var(--text-color)';
+        } else if (percentage === 100) {
+            feedbackMessage = `🎉 Outstanding, ${playerName}! A perfect score! You're a true Tech Guru! 🌟`;
             feedbackMessageEl.style.color = 'var(--success-color)';
         } else if (percentage >= 75) {
-            feedbackMessage = "👍 Excellent! Very impressive knowledge! ✨";
+            feedbackMessage = `👍 Excellent work, ${playerName}! Very impressive knowledge! ✨`;
             feedbackMessageEl.style.color = 'var(--success-color)';
         } else if (percentage >= 50) {
-            feedbackMessage = "😃 Good job! Keep learning and practicing! 📚";
+            feedbackMessage = `😃 Good job, ${playerName}! You're getting there. Keep learning! 📚`;
             feedbackMessageEl.style.color = 'var(--primary-color)';
+        } else if (percentage > 0) {
+            feedbackMessage = `🤔 Keep trying, ${playerName}! Every attempt is a step forward. Better luck next time! 💡`;
+            feedbackMessageEl.style.color = 'var(--accent-color)';
         } else {
-            feedbackMessage = "🤔 Needs Improvement. Don't give up, review and try again! 💡";
+            feedbackMessage = `😕 Oh no, ${playerName}! It seems this was a tough one. Don't give up, review and try again! Better luck next time! 💪`;
             feedbackMessageEl.style.color = 'var(--error-color)';
         }
-        feedbackMessageEl.textContent = feedbackMessage;
+        feedbackMessageEl.innerHTML = feedbackMessage;
 
-
-        wrongAnswersContainer.innerHTML = ""; // Clear previous
+        wrongAnswersContainer.innerHTML = "";
         const wrong = userAnswers.filter(ans => !ans.isCorrect);
         if (wrong.length > 0) {
             wrong.forEach(ans => {
@@ -219,31 +268,76 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.className = 'wrong-answer-item';
                 item.innerHTML = `
                     <p><strong>Question:</strong> ${ans.questionText}</p>
-                    <p><em>Your Answer:</em> ${ans.selectedAnswer}</p>
-                    <p><em>Correct Answer:</em> ${ans.correctAnswer}</p>
+                    <p><em style="color: var(--error-color);">Your Answer: ${ans.selectedAnswer}</em></p>
+                    <p><strong style="color: var(--success-color);">Correct Answer: ${ans.correctAnswer}</strong></p>
                 `;
                 wrongAnswersContainer.appendChild(item);
             });
-        } else {
-            wrongAnswersContainer.innerHTML = "<p>Congratulations! You got all answers correct!</p>";
+        } else if (questionsForCurrentSession.length > 0 && score === questionsForCurrentSession.length) {
+            wrongAnswersContainer.innerHTML = "<p>Flawless Victory! You got all answers correct!</p>";
+        } else if (questionsForCurrentSession.length > 0 && score < questionsForCurrentSession.length && score > 0) {
+             wrongAnswersContainer.innerHTML = "<p>You made some mistakes, but good effort! Review above.</p>";
+        } else if (questionsForCurrentSession.length > 0 && score === 0) {
+             wrongAnswersContainer.innerHTML = "<p>All answers were incorrect this time. Review carefully!</p>";
         }
-
+         else {
+            wrongAnswersContainer.innerHTML = "<p>No questions were answered in this quiz.</p>";
+        }
         showSection(resultsSection);
     }
 
     playAgainBtn.addEventListener('click', () => {
-        if (currentQuizId) {
-            selectQuiz(currentQuizId); // Re-selects current quiz, which goes to name entry
-            // Or, if you want to skip name entry for "play again":
-            // startGame(); // This would use the existing playerName
+        if (currentQuizId && playerName) {
+            startGame();
+        } else {
+            loadQuizSelectionScreen();
         }
     });
 
-    backToHomeBtn.addEventListener('click', () => {
-        loadQuizSelection();
+    chooseAnotherQuizBtn.addEventListener('click', () => {
+        loadQuizSelectionScreen();
     });
 
+    // --- Initial Load ---
+    initialize();
+});
+
+
+
+
+
+// script.js
+
+document.addEventListener('DOMContentLoaded', () => {
+    // ... (all your existing code for quiz logic) ...
+
+    // --- Footer Year Update ---
+    function updateFooterYear() {
+        const currentYear = new Date().getFullYear();
+        const yearSpan = document.getElementById('current-year');
+        if (yearSpan) {
+            yearSpan.textContent = currentYear;
+        }
+    }
 
     // --- Initial Load ---
-    loadQuizSelection();
+    function initialize() {
+        loadQuizSelectionScreen();
+        updateFooterYear(); // Call it here
+    }
+
+    initialize(); // Make sure initialize is called
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
