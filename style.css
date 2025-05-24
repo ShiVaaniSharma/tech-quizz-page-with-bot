@@ -1,9 +1,9 @@
 /* style.css */
 :root {
-    --primary-color: #6a11cb; /* Deep purple */
-    --secondary-color: #2575fc; /* Bright blue */
-    --accent-color: #ff6b6b; /* Coral accent */
-    --background-color: #f0f2f5; /* Light grey background */
+    --primary-color: #6a11cb;
+    --secondary-color: #2575fc;
+    --accent-color: #ff6b6b; 
+    --background-color: #f0f2f5; 
     --card-background: #ffffff;
     --text-color: #333;
     --light-text-color: #fff;
@@ -64,11 +64,11 @@ main {
 
 /* General section visibility */
 section {
-    display: none; /* Initially hide all sections */
+    display: none; 
     margin-bottom: 2rem;
 }
 section.active-section {
-    display: block; /* For non-overlay sections */
+    display: block; 
 }
 
 
