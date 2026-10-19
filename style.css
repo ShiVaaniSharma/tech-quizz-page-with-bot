@@ -62,7 +62,7 @@ main {
     box-sizing: border-box;
 }
 
-/* General section visibility */
+
 section {
     display: none; 
     margin-bottom: 2rem;
