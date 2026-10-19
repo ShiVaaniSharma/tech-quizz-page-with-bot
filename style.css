@@ -110,7 +110,7 @@ section.active-section {
     border-left: 5px solid var(--primary-color);
     display: flex;
     flex-direction: column;
-    /* min-height: 260px; /* You can adjust this if cards have very different content lengths */
+    /* min-height: 260px; /**/
 }
 
 .quiz-card:hover {
